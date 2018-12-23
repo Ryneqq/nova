@@ -1,0 +1,8 @@
+[package]
+name = "nova"
+version = "0.1.0"
+authors = ["Pawel Rynowiecki <pawel.rynowiecki@anixe.pl>"]
+edition = "2018"
+
+[dependencies]
+clap = "*"
