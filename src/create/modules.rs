@@ -1,13 +1,12 @@
 use std::path::{Path, PathBuf};
 use std::fs::{self, File};
-use crate::{AppArgs, Mode};
 
 const MOD_RS:       &str = "mod.rs";
 const LIB_RS:       &str = "lib.rs";
-const DEFALUT_PATH: &str = ".";
+const DEFAULT_PATH: &str = ".";
 
 pub fn create_module(path: Option<PathBuf>, name: &str) {
-    let path = get_path(path);
+    let path = path.unwrap_or(DEFAULT_PATH.into());
 
     if let Some(mod_path) = mod_rs_exists(&path) {
         import_module(&mod_path, &name);
@@ -21,19 +20,20 @@ pub fn create_module(path: Option<PathBuf>, name: &str) {
         return
     }
 
-    panic!("Nothing written!!!")
-}
-
-fn get_path(path: Option<PathBuf>) -> PathBuf {
-    match path {
-        Some(path)  => path,
-        None        => DEFALUT_PATH.into()
-    }
+    panic!("Nothing written! Haven't found any 'mod.rs' nor 'lib.rs' under path: '{:?}'", path);
 }
 
 fn mod_rs_exists<P: AsRef<Path>>(path: P) -> Option<PathBuf> {
     let path = path.as_ref().join(MOD_RS);
+    return_path_when_exists(path)
+}
 
+fn lib_rs_exists<P: AsRef<Path>>(path: P) -> Option<PathBuf> {
+    let path = path.as_ref().join(LIB_RS);
+    return_path_when_exists(path)
+}
+
+fn return_path_when_exists(path: PathBuf) -> Option<PathBuf> {
     match path.exists() {
         true  => Some(path),
         false => None
@@ -41,8 +41,16 @@ fn mod_rs_exists<P: AsRef<Path>>(path: P) -> Option<PathBuf> {
 }
 
 fn import_module<P: AsRef<Path>>(path: P, name: &str) {
-    let mut content = fs::read_to_string(&path).unwrap();
-    let to_write    = format!("mod {};\npub use self::{}::*\n\n", name, name);
+    let mut content = fs::read_to_string(&path)
+        .unwrap()
+        .trim()
+        .to_string();
+
+    if !content.is_empty() {
+        content.push('\n');
+    }
+
+    let to_write = format!("mod {};\npub use self::{}::*;\n", name, name);
 
     if content.contains(&to_write) {
         panic!("Module already imported!")
@@ -59,15 +67,6 @@ fn create_module_as_folder<P: AsRef<Path>>(path: P, name: &str) {
     let _ = file.sync_all();
 
     println!("Everithing gone smoothly. You had luck this time...");
-}
-
-fn lib_rs_exists<P: AsRef<Path>>(path: P) -> Option<PathBuf> {
-    let path = path.as_ref().join(LIB_RS);
-
-    match path.exists() {
-        true  => Some(path),
-        false => None
-    }
 }
 
 #[cfg(test)]
