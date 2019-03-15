@@ -7,8 +7,8 @@ const TEMPLATES_PATH:   &str = "templates/struct.rs";
 const MOD_RS:           &str = "mod.rs";
 const LIB_RS:           &str = "lib.rs";
 
-pub fn create_submodule(path: Option<PathBuf>, name: &str, mode: Mode) {
-    let path = path.unwrap_or(DEFAULT_PATH.into());
+pub fn create_submodule(path: &Option<PathBuf>, name: &str, mode: &Mode) {
+    let path = path.clone().unwrap_or(DEFAULT_PATH.into());
 
     if let Some(mod_path) = mod_rs_exists(&path) {
         import_module(&mod_path, &name);
@@ -24,16 +24,32 @@ pub fn create_submodule(path: Option<PathBuf>, name: &str, mode: Mode) {
 }
 
 fn import_module<P: AsRef<Path>>(path: P, name: &str) {
-    let mut content = fs::read_to_string(&path).unwrap();
-    let to_write    = format!("\nmod {};\npub use self::{}::*\n", name, name);
+    let mut content = fs::read_to_string(&path)
+        .unwrap()
+        .trim()
+        .to_string();
 
-    content.push_str(&to_write);
-    fs::write(&path, content).expect("Couldn't save that.");
+    if !content.is_empty() {
+        content.push('\n');
+    }
+
+    let to_write = format!("mod {};\npub use self::{}::*;\n", name, name);
+
+    if content.contains(&to_write) {
+        panic!("Module already imported!")
+    } else {
+        content.push_str(&to_write);
+        fs::write(&path, content).expect("Couldn't save that.");
+    }
 }
 
 fn create_module_as_file<P: AsRef<Path>>(path: P, name: &str) {
-    let path = path.as_ref().join(name).as_path().join(".rs");
-    let _    = fs::copy(TEMPLATES_PATH, &path);
+    let mut path = path.as_ref().join(name);
+    path.set_extension("rs");
+    // let _    = fs::copy(TEMPLATES_PATH, &path);
+    fs::copy(TEMPLATES_PATH, &path).expect(&format!("Could not copy this file: '{:?}'", path));
+
+
 
     println!("Everithing gone smoothly. You had luck this time...");
 }

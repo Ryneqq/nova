@@ -5,8 +5,8 @@ const MOD_RS:       &str = "mod.rs";
 const LIB_RS:       &str = "lib.rs";
 const DEFAULT_PATH: &str = ".";
 
-pub fn create_module(path: Option<PathBuf>, name: &str) {
-    let path = path.unwrap_or(DEFAULT_PATH.into());
+pub fn create_module(path: &Option<PathBuf>, name: &str) {
+    let path = path.clone().unwrap_or(DEFAULT_PATH.into());
 
     if let Some(mod_path) = mod_rs_exists(&path) {
         import_module(&mod_path, &name);
@@ -28,6 +28,8 @@ fn mod_rs_exists<P: AsRef<Path>>(path: P) -> Option<PathBuf> {
     return_path_when_exists(path)
 }
 
+//TODO: get into consideration to search for also main.rs
+
 fn lib_rs_exists<P: AsRef<Path>>(path: P) -> Option<PathBuf> {
     let path = path.as_ref().join(LIB_RS);
     return_path_when_exists(path)
@@ -46,9 +48,7 @@ fn import_module<P: AsRef<Path>>(path: P, name: &str) {
         .trim()
         .to_string();
 
-    if !content.is_empty() {
-        content.push('\n');
-    }
+    //TODO: Add parsing of the document
 
     let to_write = format!("mod {};\npub use self::{}::*;\n", name, name);
 
@@ -69,15 +69,15 @@ fn create_module_as_folder<P: AsRef<Path>>(path: P, name: &str) {
     println!("Everithing gone smoothly. You had luck this time...");
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    const PATH: &str = "tmp/my_mod";
+//     const PATH: &str = "tmp/my_mod";
 
-    #[test]
-    fn name() {
-        create_module(Some(PATH.into()), "my_new_mod");
-        // create_submod(Some(PATH.into()), "my_new_struct");
-    }
-}
+//     #[test]
+//     fn name() {
+//         create_module(Some(PATH.into()), "my_new_mod");
+//         // create_submod(Some(PATH.into()), "my_new_struct");
+//     }
+// }
